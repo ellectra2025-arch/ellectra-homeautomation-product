@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ellectra - Home Automation</title>
+    <!-- Google Sign-In SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary-yellow: #FFD700;
+            --dark-black: #1a1a1a;
+            --accent-red: #FF4444;
+            --white: #FFFFFF;
+            --light-gray: #f8f8f8;
+            --text-dark: #1a1a1a;
+            --shadow: 0 12px 40px rgba(26, 26, 26, 0.12);
+            --shadow-lg: 0 20px 60px rgba(26, 26, 26, 0.2);
+            --radius: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: transparent;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.85;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+            color: var(--white);
+            padding: 24px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            height: 55px;
+            width: auto;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .company-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-about {
+            background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+            color: var(--dark-black);
+            border: none;
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.25);
+        }
+
+        .btn-about:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-signin {
+            background: linear-gradient(135deg, #FF4444 0%, #FF2222 100%);
+            color: var(--white);
+            border: none;
+            box-shadow: 0 8px 20px rgba(255, 68, 68, 0.25);
+        }
+
+        .btn-signin:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(255, 68, 68, 0.4);
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .hero {
+            text-align: center;
+            gap: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: slideInUp 0.8s ease-out;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 50px 40px;
+            border-radius: var(--radius);
+            backdrop-filter: blur(8px);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2.8rem, 6vw, 4rem);
+            color: var(--white);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero .highlight {
+            color: var(--accent-red);
+        }
+
+        .hero p {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--white);
+            max-width: 600px;
+            line-height: 1.6;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.6);
+            font-weight: 500;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, var(--white) 0%, #fafafa 100%);
+            padding: 40px 30px;
+            border-radius: var(--radius);
+            border: 2px solid var(--primary-yellow);
+            box-shadow: var(--shadow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .feature-card:hover {
+            border-color: var(--accent-red);
+            transform: translateY(-12px);
+            box-shadow: 0 20px 50px rgba(255, 68, 68, 0.25);
+        }
+
+        .feature-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .feature-card h3 {
+            margin: 16px 0 12px;
+            color: var(--dark-black);
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: var(--white);
+            padding: 60px 50px;
+            border-radius: var(--radius);
+            text-align: center;
+            gap: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .cta-section h2 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-section p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #ddd;
+            max-width: 500px;
+        }
+
+        .auth-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+        }
+
+        #g_id_onload {
+            margin: 20px 0;
+        }
+
+        .signin-message {
+            font-size: 1rem;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+            color: var(--dark-black);
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-top: 16px;
+            box-shadow: 0 12px 30px rgba(255, 215, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 45px rgba(255, 215, 0, 0.5);
+        }
+
+        .cta-button:active {
+            transform: translateY(-2px);
+        }
+
+        footer {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            color: var(--white);
+            text-align: center;
+            padding: 30px;
+            margin-top: auto;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        footer p {
+            margin: 0;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 16px 20px;
+            }
+
+            .container {
+                padding: 40px 20px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .cta-section {
+                padding: 30px 20px;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video id="video-background" autoplay muted loop>
+        <source src="https://raw.githubusercontent.com/ellectra2025-arch/ellectra-homeautomation-product/main/14471459_3840_2160_30fps.mp4" type="video/mp4">
+    </video>
+    <header>
+        <div class="logo-section">
+            <img src="https://raw.githubusercontent.com/projectcentreai-ux/ellectra-internship/main/ellectra%20new%20logo.png" alt="Ellectra Logo" class="logo">
+            <span class="company-name">Ellectra</span>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-about" onclick="window.location.href='https://ellectra2025-arch.github.io/ellectra-automation/'">📋 About</button>
+            <button class="btn-signin" onclick="document.getElementById('signin-section').scrollIntoView({behavior: 'smooth'})">🔐 Sign In</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h1>Welcome to <span class="highlight">Ellectra</span></h1>
+            <p>Smart Home Automation Made Simple</p>
+            <p>Scan and connect your devices instantly with our innovative QR code scanner system</p>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Easy Setup</h3>
+                <p>Scan QR codes to onboard your smart devices instantly</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure</h3>
+                <p>Your data is encrypted and secure with Firebase authentication</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Fast</h3>
+                <p>Real-time device control with instant updates</p>
+            </div>
+        </section>
+
+        <section class="cta-section" id="signin-section">
+            <h2>Get Started Now</h2>
+            <p>Sign in with your Google account to access the full features and manage your smart devices</p>
+            <div class="auth-section">
+                <!-- Google Sign-In Button -->
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE"
+                     data-callback="handleCredentialResponse">
+                </div>
+                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="dark" data-text="signin_with"></div>
+                <p class="signin-message">Or continue as guest:</p>
+                <a href="qrscanner.html" class="cta-button">Scan Device QR Code →</a>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Ellectra - Smart Home Automation. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Firebase Authentication Setup (Ready for implementation)
+        // Import Firebase SDK and configure here
+        
+        function handleCredentialResponse(response) {
+            // This function will handle the Google Sign-In response
+            // Decode JWT and send to your backend or Firebase
+            console.log("Encoded JWT ID token: " + response.credential);
+            
+            // Example Firebase implementation:
+            // firebase.auth().signInWithCustomToken(response.credential)
+            //     .then((userCredential) => {
+            //         // User signed in successfully
+            //         window.location.href = 'qrscanner.html';
+            //     })
+            //     .catch((error) => {
+            //         console.error('Authentication error:', error);
+            //     });
+        }
+
+        window.onload = function () {
+            // Google Sign-In initialization
+            // This will be called automatically after the GSI library loads
+        };
+    </script>
+</body>
+</html>

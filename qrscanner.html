@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ellectra - QR Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary-yellow: #FFD700;
+            --dark-black: #1a1a1a;
+            --accent-red: #FF4444;
+            --white: #FFFFFF;
+            --light-gray: #f8f8f8;
+            --text-dark: #1a1a1a;
+            --bg: var(--light-gray);
+            --panel: var(--white);
+            --panel-soft: #f5f5f5;
+            --accent: var(--primary-yellow);
+            --accent-strong: var(--accent-red);
+            --text: var(--text-dark);
+            --muted: #666666;
+            --success: #22c55e;
+            --danger: var(--accent-red);
+            --radius: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scanPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--white) 0%, var(--light-gray) 100%);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+            color: var(--white);
+            padding: 24px 50px;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            height: 55px;
+            width: auto;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .company-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page {
+            flex: 1;
+            max-width: 1036px;
+            margin: 40px auto;
+            width: calc(100% - 80px);
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, #FFC700 100%);
+            border: 3px solid var(--dark-black);
+            border-radius: var(--radius);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            display: grid;
+            gap: 14px;
+            animation: slideInUp 0.6s ease-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+            letter-spacing: -0.04em;
+            color: var(--dark-black);
+            font-weight: 900;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 760px;
+            line-height: 1.7;
+            color: var(--dark-black);
+            font-weight: 700;
+            font-size: 1.1rem-0.04em;
+            color: var(--dark-black);
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 760px;
+            line-height: 1.7;
+            color: var(--dark-black);
+            font-weight: 600;
+        }
+
+        .hero .subtitle {
+            color: var(--dark-black);
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        .scanner-card {
+            display: grid;
+            gap: 24px;
+            padding: 32px;
+            background: var(--panel);
+            border: 3px solid var(--dark-black);
+            border-radius: calc(var(--radius) - 4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        #reader {
+            width: min(100%, 640px);
+            min-height: 360px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--dark-black);
+            border: 3px solid var(--accent-red);
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.2);
+            animation: scanPulse 2s infinite;
+        }
+
+        .status-panel {
+            display: grid;
+            gap: 12px;
+        }
+
+        #result {
+            padding: 18px 20px;
+            border-radius: 12px;
+            background: #f5f5f5;
+            border: 2px solid var(--primary-yellow);
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        #result span {
+            flex: 1;
+            min-width: 180px;
+            word-break: break-word;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--white);
+            background: var(--dark-black);
+            border: 2px solid var(--dark-black);
+        }
+
+        .badge.success {
+            background: var(--success);
+            border-color: var(--success);
+            color: var(--white);
+        }
+
+        .badge.waiting {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: var(--white);
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 14px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, var(--accent-red) 0%, #ff2222 100%);
+            color: var(--white);
+            box-shadow: 0 8px 24px rgba(255, 68, 68, 0.3);
+            border: none;
+        }
+
+        button.primary:hover {
+            box-shadow: 0 12px 32px rgba(255, 68, 68, 0.5);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, #FFC700 100%);
+            color: var(--dark-black);
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 6px 16px rgba(255, 215, 0, 0.25);
+        }
+
+        button.secondary:hover {
+            box-shadow: 0 10px 28px rgba(255, 215, 0, 0.4);
+        }
+
+        button.disabled,
+        button:disabled {
+            opacity: 0.52;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .tutorial {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFFAEB 100%);
+            border: 2px solid var(--primary-yellow);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin: 24px 0;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.8s ease-out 0.2s backwards;
+        }
+
+        .tutorial h3 {
+            color: var(--dark-black);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        .tutorial-item {
+            margin-bottom: 18px;
+            padding: 16px 18px;
+            background: var(--white);
+            border-left: 5px solid var(--accent-red);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .tutorial-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(255, 68, 68, 0.15);
+        }
+
+        .tutorial-item h4 {
+            margin: 0 0 8px 0;
+            color: var(--accent-red);
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .tutorial-item p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .back-button a {
+            color: var(--accent-red);
+            text-decoration: none;
+            font-weight: 800;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1.05rem;
+        }
+
+        .back-button a:hover {
+            color: var(--dark-black);
+            transform: translateX(-4px);
+        }
+
+        footer {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            color: var(--white);
+            text-align: center;
+            padding: 30px;
+            margin-top: auto;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        footer p {
+            margin: 0;
+            opacity: 0.8;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            color: var(--muted);
+            font-size: 1rem;
+            padding: 20px 0;
+            animation: fadeIn 0.8s ease-out 0.3s backwards;
+        }
+
+        .footer span {
+            transition: color 0.3s ease;
+        }
+
+        .footer span:hover {
+            color: var(--accent-red);
+        }
+
+        .footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 16px 20px;
+            }
+
+            .hero,
+            .scanner-card {
+                padding: 20px;
+            }
+
+            #reader {
+                min-height: 280px;
+            }
+
+            .buttons {
+                justify-content: center;
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .page {
+                padding: 20px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video id="video-background" autoplay muted loop>
+        <source src="https://raw.githubusercontent.com/ellectra2025-arch/ellectra-homeautomation-product/main/14471459_3840_2160_30fps.mp4" type="video/mp4">
+    </video>
+    <header>
+        <div class="logo-section">
+            <img src="https://raw.githubusercontent.com/projectcentreai-ux/ellectra-internship/main/ellectra%20new%20logo.png" alt="Ellectra Logo" class="logo">
+            <span class="company-name">Ellectra</span>
+        </div>
+        <div class="back-button">
+            <a href="index.html">← Back to Home</a>
+        </div>
+    </header>
+
+    <main class="page">
+        <section class="hero">
+            <h1>🎉 Thank You for Purchasing Our Product!</h1>
+            <p>Please scan the QR code on your product to get started</p>
+            <p class="subtitle">Your device QR code contains all the information needed to connect to your smart home system</p>
+        </section>
+
+        <section class="scanner-card">
+            <div id="reader"></div>
+
+            <div class="status-panel">
+                <div id="result"><span>Ready to scan. Point your camera at your product QR code.</span><span class="badge waiting">Waiting for scan</span></div>
+                <div class="buttons">
+                    <button id="copyButton" class="secondary" disabled>📋 Copy Device ID</button>
+                    <button id="openButton" class="primary" disabled>✅ Add to Account</button>
+                    <button id="resetButton" class="secondary">🔄 Reset Scanner</button>
+                </div>
+            </div>
+
+            <div class="tutorial">
+                <h3>📚 How to Use This Scanner</h3>
+                <div class="tutorial-item">
+                    <h4>📷 Copy Device ID Button</h4>
+                    <p>After scanning a QR code, click this button to copy the device ID to your clipboard. You can then paste it anywhere you need the device information. The button becomes active only after a successful scan.</p>
+                </div>
+                <div class="tutorial-item">
+                    <h4>✅ Add to Account Button</h4>
+                    <p>Clicking this button will take you to your account management page where you can officially register this device. This is the main action you'll perform after scanning. You'll be redirected to complete the device setup.</p>
+                </div>
+                <div class="tutorial-item">
+                    <h4>🔄 Reset Scanner Button</h4>
+                    <p>Use this button to clear the current scan and start fresh. This resets the scanner display and allows you to scan a new device. Useful if you made a mistake or want to scan multiple devices.</p>
+                </div>
+                <div class="tutorial-item">
+                    <h4>💡 Tips for Best Results</h4>
+                    <p>Ensure good lighting for faster scans. Hold the device steady at a slight angle to the QR code. Keep the code within the camera frame. If the scan is slow, try moving closer to the QR code or adjusting the angle.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer"> 
+            <span>🔒 Your scanned codes are processed securely</span>
+            <span>Need help? Check the tutorial above</span>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ellectra - Smart Home Automation. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const resultArea = document.getElementById('result');
+        const copyButton = document.getElementById('copyButton');
+        const openButton = document.getElementById('openButton');
+        const resetButton = document.getElementById('resetButton');
+        let lastScannedText = '';
+
+        function setResultText(message, status = 'waiting') {
+            resultArea.innerHTML = `<span>${message}</span><span class="badge ${status}">${status === 'success' ? 'Ready' : status === 'error' ? 'Error' : 'Waiting'}</span>`;
+        }
+
+        function onScanSuccess(decodedText) {
+            lastScannedText = decodedText;
+            setResultText(`Scanned device code: ${decodedText}`, 'success');
+            copyButton.disabled = false;
+            openButton.disabled = false;
+        }
+
+        function onScanFailure(error) {
+            // scanner will continue trying; no need to show every failed frame
+        }
+
+        function copyToClipboard() {
+            if (!lastScannedText) return;
+            navigator.clipboard.writeText(lastScannedText).then(() => {
+                setResultText(`Copied device code to clipboard: ${lastScannedText}`, 'success');
+            });
+        }
+
+        function redirectToDevicePage() {
+            if (!lastScannedText) return;
+            const targetUrl = `https://example.com/add-device?code=${encodeURIComponent(lastScannedText)}`;
+            window.location.href = targetUrl;
+        }
+
+        function resetScanner() {
+            lastScannedText = '';
+            copyButton.disabled = true;
+            openButton.disabled = true;
+            setResultText('Ready to scan. Point your camera at a device QR code.', 'waiting');
+        }
+
+        copyButton.addEventListener('click', copyToClipboard);
+        openButton.addEventListener('click', redirectToDevicePage);
+        resetButton.addEventListener('click', resetScanner);
+
+        const html5QrcodeScanner = new Html5QrcodeScanner('reader', {
+            fps: 10,
+            qrbox: { width: 260, height: 260 },
+            aspectRatio: 1.2,
+            rememberLastUsedCamera: true
+        }, false);
+
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>
+</body>
+</html>
